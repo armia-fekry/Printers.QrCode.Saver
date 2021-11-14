@@ -22,13 +22,13 @@ namespace PrintersQrCode
 			}
 			else
 			{
-				Console.WriteLine("enter Valid Data and try again!");
+				Console.WriteLine("Invalid Data , You Should Enter DocumentNo and Departmentno Separated by Space");
 			}
 			Console.ReadLine();
 		}
 
 		/// <summary>
-		/// Function To Generte Qr Code As An Array Of Bytes
+		/// Function To Generte Qr Code As Base24StringImg
 		/// </summary>
 		/// <param name="DocumentNo"></param>
 		/// <param name="DepartmentID"></param>
@@ -138,16 +138,7 @@ namespace PrintersQrCode
 			}
 
 		}
-		public static void Aspose(byte[] bitmapByteQR)
-		{
-			
-
-
-
-
-
-
-		}
+		
 		// Register AppSetting.json configuration provider File at Configurations
 		private static IConfiguration Configuration
 		{
