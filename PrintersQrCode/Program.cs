@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Security.Claims;
+using System.Security.Principal;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
@@ -13,18 +15,22 @@ namespace PrintersQrCode
 	{
 		static void Main(string[] args)
 		{
-			
-			if (args.Length == 2)
+
+
+			if (args.Length == 3)
 			{
-				var QrBytes = QrCodeGenerator(args[0], args[1]);
-				if (SaveQrCodeAsPdf(QrBytes))
+				
+				var QrBytes = QrCodeGenerator(args[0], args[1], args[2]);
+				//throw new Exception(QrBytes);
+				if (SaveQrCodeAsPdf(QrBytes,args[2]))
 					Console.WriteLine($"QrCode Generate Sucssefuly Go To Path To View");
 			}
 			else
 			{
+				throw new Exception("no args");
 				Console.WriteLine("enter Valid Data and try again!");
 			}
-			Console.ReadLine();
+			//Console.ReadLine();
 		}
 
 		/// <summary>
@@ -33,12 +39,12 @@ namespace PrintersQrCode
 		/// <param name="DocumentNo"></param>
 		/// <param name="DepartmentID"></param>
 		/// <returns>Qrcode As Base24StringImg</returns>
-		public static string QrCodeGenerator(string DocumentNo , string DepartmentID) 
+		public static string QrCodeGenerator(string DocumentNo , string DepartmentID,string UserName) 
 		{
 			try
 			{
 				QRCodeGenerator QrGenertator = new QRCodeGenerator();
-				string UserName = Environment.UserName;
+				//string UserName = //Environment.UserName;
 				string NewLine = Environment.NewLine;
 				string Payload = string.Format("{0}{1}{2}{3}{4}",
 								DocumentNo, NewLine, DepartmentID, NewLine, UserName);
@@ -50,6 +56,7 @@ namespace PrintersQrCode
 			}
 			catch (Exception ex)
 			{
+				throw ;
 				string ErrorMsg = string.Format("Error Message: {0}\n stacktrace : {1}",
 										ex.Message, ex.StackTrace);
 				Console.WriteLine(ErrorMsg);
@@ -89,6 +96,7 @@ namespace PrintersQrCode
 			}
 			catch (Exception ex)
 			{
+				throw ;
 				string ErrorMsg = string.Format("Error Message: {0}\n stacktrace : {1}",
 														ex.Message, ex.StackTrace);
 				Console.WriteLine(ErrorMsg);
@@ -97,21 +105,28 @@ namespace PrintersQrCode
 			
 		}
 
-		public static bool SaveQrCodeAsPdf(string bytes)
+		public static bool SaveQrCodeAsPdf(string bytes,string userName)
 		{
-			try
-			{
-				string UserPath = Configuration.GetSection("Path")?.Value;
-				string UserFileName = Configuration.GetSection("FileName")?.Value;
-				string QrWidth = Configuration.GetSection("Width")?.Value;
-				string QrHight = Configuration.GetSection("Hight")?.Value;
+			string UserPath = "C:\\"; //Configuration.GetSection("Path")?.Value;
+			//	throw new Exception(UserPath);
+			string UserFileName = "Test101"; //Configuration.GetSection("FileName")?.Value;
+			string QrWidth = "80px"; //Configuration.GetSection("Width")?.Value;
+			string QrHight = "80px";// Configuration.GetSection("Hight")?.Value;
 
-				string UserName = Environment.UserName;
+			
+			//throw new Exception("user name is :"+UserName);
+			//path = UserPath\UserName
+			//string Path = String.Format("{0}\\{1}", UserPath, UserName);
+				//if(string.IsNullOrEmpty(Path))
+				//throw new Exception("no path defined");
+				//throw new Exception("Faddo");
 
-				//path = UserPath\UserName
-				string Path = String.Format("{0}\\{1}", UserPath, UserName);
+			string UserName = userName;
 
-				if (!Directory.Exists(Path))
+			//path = UserPath\UserName
+			string Path = String.Format("{0}\\{1}", UserPath, UserName);
+
+			if (!Directory.Exists(Path))
 					Directory.CreateDirectory(Path);
 
 				//path = UserPath\UserName\UserFileName.pdf
@@ -128,14 +143,14 @@ namespace PrintersQrCode
 				var PdfDocument = converter.ConvertHtmlString(QrCodeImgTag);
 				PdfDocument.Save(QrPdfFile);			
 				return true;
-			}
-			catch (Exception ex)
-			{
-				string ErrorMsg = string.Format("Error Message: {0}\n stacktrace : {1}",
-														ex.Message, ex.StackTrace);
-				Console.WriteLine(ErrorMsg);
-				return false;
-			}
+			
+		
+				//throw ;
+				//string ErrorMsg = string.Format("Error Message: {0}\n stacktrace : {1}",
+				//										ex.Message, ex.StackTrace);
+				//Console.WriteLine(ErrorMsg);
+				//return false;
+			
 
 		}
 		public static void Aspose(byte[] bitmapByteQR)
