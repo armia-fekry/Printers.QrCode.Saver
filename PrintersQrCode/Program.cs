@@ -26,49 +26,50 @@ namespace PrintersQrCode
         public enum CodeType {
             Qrcode, BarCode
         }
+        public static int pauload = 0;
         public static void Main(string[] args)
         {
-
-            generate(new string[6] { "a", "f","45721","k","128845", @"D:\JsonFile\test.pdf" });
-
+            args = new string[] { "m", "1", "hr", "arn",@"D:\test2\test.pdf" };
+            generate(args);
         }
         private static void generate(string[] args)
         {
 
             if (args[0].ToLower() == "a")//autmoatic insert
             {
-                if (args.Count() != 5)
+                if (args.Count() != 4)
                     Console.WriteLine("Invalid Arg Number You Select Automatic and you should Insert DepType(f or h) , DepNo,user,Path");
                 string DocumentNo = AddNewToJson(args[1]).ToString();
-                var QrImage = QrCodeGenerator(DocumentNo, args[2], args[3]);
-                string payload = $"{DocumentNo}-{args[2]}-{args[3]}";
+                var QrImage = QrCodeGenerator(DocumentNo, args[1], args[2]);
+                string payload = $"{DocumentNo}-{args[1]}-{args[2]}";
+                pauload = payload.Count();
                 var BarCodeImage = GenerateBarcode(payload);
                 if (QrImage is null)
                     throw new Exception("Cannot Generate Qr Image");
                 if (BarCodeImage is null)
                     throw new Exception("could not generte Barcode image"); 
 
-                AddStampToPdf(args[4], QrImage);
-                AddStampToPdf(args[4], BarCodeImage, CodeType.BarCode);
+                AddStampToPdf(args[3], QrImage);
+                AddStampToPdf(args[3], BarCodeImage, CodeType.BarCode);
             }
             else//manual insert
             {
 
-                if (args.Count() != 6)
+                if (args.Count() != 5)
                     Console.WriteLine("Invalid Arg Number You Select manual and you should Insert DepType(f or h) , DepNo,DepNo,user,Path");
                 if (!UpdateExitingJson(args[1], args[2]))
-                    throw new Exception("Somthing Wrong During Insert in Json, or Document No Not Found");
+                { Console.WriteLine("Somthing Wrong During Insert in Json, or Document No Not Found"); return; }
 
-                var QrImage = QrCodeGenerator(args[2], args[3], args[4]);
-                string payload = $"{args[2]}-{args[3]}-{args[4]}";
+                var QrImage = QrCodeGenerator(args[1], args[2], args[3]);
+                string payload = $"{args[1]}-{args[2]}-{args[3]}";
                 var BarCodeImage = GenerateBarcode(payload);
                 if (QrImage is null)
                     throw new Exception("Cannot Generate Qr Image");
                 if (BarCodeImage is null)
                     throw new Exception("could not generte Barcode image");
                
-                AddStampToPdf(args[5], QrImage);
-                AddStampToPdf(args[5], BarCodeImage, CodeType.BarCode);
+                AddStampToPdf(args[4], QrImage);
+                AddStampToPdf(args[4], BarCodeImage, CodeType.BarCode);
             }
         }
         private static int AddNewToJson(string DepType)
@@ -79,15 +80,13 @@ namespace PrintersQrCode
             JArray values = jsonObject.GetValue("Values") as JArray;
             int lastId = values.LastOrDefault() == default(JToken) ? 0 : values.LastOrDefault().Value<int>();
             values.Add((lastId + 1).ToString());
-            if (lastId == 0)
-                lastId = 1;
             jsonObject["Values"] = values;
             string final = JsonConvert.SerializeObject(jsonObject, Formatting.Indented);
             File.WriteAllText(path, final);
-            return lastId;
+            return ++lastId;
         }
 
-        private static bool UpdateExitingJson(string DepType, string DocNo)
+        private static bool UpdateExitingJson( string DocNo, string DepType)
         {
             string path = IntializeJsonFile(DepType);
             string json = File.ReadAllText(path);
@@ -120,9 +119,9 @@ namespace PrintersQrCode
             if (!Directory.Exists(JsonFileStr))
                 Directory.CreateDirectory(JsonFileStr);
 
-            if (DepType.ToLower() == "h")
+            if (DepType.ToLower() == "hr")
                 JsonFileStr = JsonFileStr + "hr.json";
-            if (DepType.ToLower() == "f")
+            if (DepType.ToLower() == "finance")
                 JsonFileStr = JsonFileStr + "Finance.json";
            if(!File.Exists(JsonFileStr))
                 File.WriteAllText(JsonFileStr, @"{""Values"":[]}");
@@ -276,17 +275,17 @@ namespace PrintersQrCode
             Spire.Pdf.PdfDocument document = new Spire.Pdf.PdfDocument($@"{pdfPath}");
             if (document.Pages.Count <= 0)
                 return false;
-
+           // Size _size = _codeType == CodeType.BarCode ? (qrImage.Width > 110 || qrImage.Width < 80 ? new Size(110, 60) : qrImage.Size) : qrImage.Size;
             PdfPageBase page = document.Pages[0];
             Spire.Pdf.Graphics.PdfTemplate template = new Spire.Pdf.Graphics.PdfTemplate(qrImage.Size);
 
             PdfImage image = PdfImage.FromImage(qrImage);
-
+            int FontSize = pauload < 11 ? 6 : 9;
             if (_codeType == CodeType.BarCode)
             {
                 template.Graphics.DrawImage(image, 0, 0, image.Width, image.Height - 10);
                 template.Graphics.DrawString($"Date:{DateTime.Now.ToShortDateString()}     Time:{DateTime.Now.ToShortTimeString()}",
-                                   new Spire.Pdf.Graphics.PdfFont(PdfFontFamily.Helvetica, 9, PdfFontStyle.Regular),
+                                   new Spire.Pdf.Graphics.PdfFont(PdfFontFamily.Helvetica, FontSize, PdfFontStyle.Regular),
                                    PdfBrushes.Black, new PointF(10, image.Height - 10));
             }
             else
