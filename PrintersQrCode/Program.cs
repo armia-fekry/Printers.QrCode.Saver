@@ -52,6 +52,7 @@ namespace PrintersQrCode
 											   QRCodeGenerator.ECCLevel.Q);
 				PdfByteQRCode pdfBytesQrCode = new PdfByteQRCode(QrData);
 				Base64QRCode Base = new Base64QRCode(QrData);
+				
 				return Base.GetGraphic(20);
 			}
 			catch (Exception ex)
