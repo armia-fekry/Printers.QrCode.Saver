@@ -27,7 +27,6 @@ namespace PrintersQrCode
         public static int pauload = 0;
         public static void Main(string[] args)
         {
-            args = new string[] { "m", "1", "hr", "arn",@"D:\test2\test.pdf" };
             generate(args);
         }
         private static void generate(string[] args)
