@@ -15,6 +15,8 @@ using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;
 using ZXing.QrCode.Internal;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace PrintersQrCode
 {
