@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -172,14 +170,14 @@ namespace PrintersQrCode
                 string UserFileName = Configuration.GetSection("FileName")?.Value;
                 string UserName = Environment.UserName;
 
-                //path = UserPath\UserName
-                string Path = String.Format("{0}\\{1}", UserPath, UserName);
+				//path = UserPath\UserName
+				string Path = String.Format("{0}\\{1}", UserPath, UserName);
 
-                if (!Directory.Exists(Path))
-                    Directory.CreateDirectory(Path);
+				if (!Directory.Exists(Path))
+					Directory.CreateDirectory(Path);
 
-                //path = UserPath\UserName\UserFileName.pdf
-                string QrPdfFile = string.Format("{0}\\{1}.pdf", Path, UserFileName);
+				//path = UserPath\UserName\UserFileName.pdf
+				string QrPdfFile = string.Format("{0}\\{1}.pdf", Path, UserFileName);
 
                 FileStream FileStream = new FileStream(
                     QrPdfFile, FileMode.Create, FileAccess.Write);
@@ -199,52 +197,45 @@ namespace PrintersQrCode
 
         }
 
-        public static bool SaveQrCodeAsPdf(string bytes, string userName)
-        {
-            string UserPath = "C:\\"; //Configuration.GetSection("Path")?.Value;
-                                      //	throw new Exception(UserPath);
-            string UserFileName = "Test101"; //Configuration.GetSection("FileName")?.Value;
-            string QrWidth = "80px"; //Configuration.GetSection("Width")?.Value;
-            string QrHight = "80px";// Configuration.GetSection("Hight")?.Value;
+		public static bool SaveQrCodeAsPdf(string bytes)
+		{
+			try
+			{
+				string UserPath = Configuration.GetSection("Path")?.Value;
+				string UserFileName = Configuration.GetSection("FileName")?.Value;
+				string QrWidth = Configuration.GetSection("Width")?.Value;
+				string QrHight = Configuration.GetSection("Hight")?.Value;
 
+				string UserName = Environment.UserName;
 
-            //throw new Exception("user name is :"+UserName);
-            //path = UserPath\UserName
-            //string Path = String.Format("{0}\\{1}", UserPath, UserName);
-            //if(string.IsNullOrEmpty(Path))
-            //throw new Exception("no path defined");
-            //throw new Exception("Faddo");
+				//path = UserPath\UserName
+				string Path = String.Format("{0}\\{1}", UserPath, UserName);
 
-            string UserName = userName;
+				if (!Directory.Exists(Path))
+					Directory.CreateDirectory(Path);
 
-            //path = UserPath\UserName
-            string Path = String.Format("{0}\\{1}", UserPath, UserName);
+				//path = UserPath\UserName\UserFileName.pdf
+				string QrPdfFile = string.Format("{0}\\{1}.pdf", Path, UserFileName);
 
-            if (!Directory.Exists(Path))
-                Directory.CreateDirectory(Path);
+				var imgSrc = String.Format("data:image/jpg;base64,{0}", bytes);
 
-            //path = UserPath\UserName\UserFileName.pdf
-            string QrPdfFile = string.Format("{0}\\{1}.pdf", Path, UserFileName);
-
-            var imgSrc = String.Format("data:image/jpg;base64,{0}", bytes);
-
-            StringBuilder HtmlBuilder = new StringBuilder();
-            HtmlBuilder.Append(@"<div>");
-            HtmlBuilder.Append("<img src ={0} width= {1} height = {2} />");
-            HtmlBuilder.Append("</div>");
-            string QrCodeImgTag = string.Format(HtmlBuilder.ToString(), imgSrc, QrHight, QrWidth);
-            HtmlToPdf converter = new HtmlToPdf();
-            var PdfDocument = converter.ConvertHtmlString(QrCodeImgTag);
-            PdfDocument.Save(QrPdfFile);
-            return true;
-
-
-            //throw ;
-            //string ErrorMsg = string.Format("Error Message: {0}\n stacktrace : {1}",
-            //										ex.Message, ex.StackTrace);
-            //Console.WriteLine(ErrorMsg);
-            //return false;
-
+				StringBuilder HtmlBuilder = new StringBuilder();
+				HtmlBuilder.Append(@"<div>");
+				HtmlBuilder.Append("<img src ={0} width= {1} height = {2} />");
+				HtmlBuilder.Append("</div>");
+				string QrCodeImgTag = string.Format(HtmlBuilder.ToString(),imgSrc,QrHight,QrWidth);
+				HtmlToPdf converter = new HtmlToPdf();
+				var PdfDocument = converter.ConvertHtmlString(QrCodeImgTag);
+				PdfDocument.Save(QrPdfFile);			
+				return true;
+			}
+			catch (Exception ex)
+			{
+				string ErrorMsg = string.Format("Error Message: {0}\n stacktrace : {1}",
+														ex.Message, ex.StackTrace);
+				Console.WriteLine(ErrorMsg);
+				return false;
+			}
 
         }
 
