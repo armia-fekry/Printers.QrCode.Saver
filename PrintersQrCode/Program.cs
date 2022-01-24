@@ -7,12 +7,12 @@ using Spire.Pdf.Annotations;
 using Spire.Pdf.Annotations.Appearance;
 using Spire.Pdf.Graphics;
 using ZXing;
-using ZXing.Common;
 using ZXing.QrCode;
 using ZXing.QrCode.Internal;
 using System.Drawing;
 using System.Collections.Generic;
 using Microsoft.VisualBasic;
+using NetBarcode;
 
 namespace PrintersQrCode
 {
@@ -20,6 +20,7 @@ namespace PrintersQrCode
 	class Program
     {
 		public static string _Code { get; set; }
+		public static string _UserName { get; set; }
 		public enum DepartmentType
         {
             Hr=07001,Finance=07002
@@ -32,10 +33,12 @@ namespace PrintersQrCode
 
         public static void Main(string[] args)
         {
-			try
-			{
+            try
+            {
+
                 DepartmentsKeyValue.Add("hr", "07001");
                 DepartmentsKeyValue.Add("finance", "07002");
+                //args = new string[] { "finance", "armiafekryzaki", @"D:\armia\00750307002500000024.pdf" };
                 generate(args);
             }
 			catch (Exception ex)
@@ -50,7 +53,8 @@ namespace PrintersQrCode
             //autmoatic insert (hr user path)
             if (args.Count()==3)
             {
-             
+
+                _UserName = args[1];
                 string DocumentNo = AddNewToJson(args[0]).ToString();
                 string depCode = DepartmentsKeyValue[args[0].ToLower()];
                 var QrImage = QrCodeGenerator(depCode,DocumentNo,args[1]);
@@ -66,6 +70,7 @@ namespace PrintersQrCode
             }
             if (args.Count() == 4)//manual insert
             {
+                _UserName = args[2];
                 if (!UpdateExitingJson(args[1], args[0]))
                 { throw new Exception("Somthing Wrong During Insert in Json, or Document No Not Found");  }
                 string depCode = DepartmentsKeyValue[args[0].ToLower()];
@@ -111,19 +116,24 @@ namespace PrintersQrCode
         {
             string _Data = $"007503{DepCode}{Sequence}";
             _Code = _Data;
-            BarcodeWriter writer = new BarcodeWriter()
-            {
-                Format = BarcodeFormat.CODE_128,
-                Options = new EncodingOptions
-                {
-                    Height = 65,
-                    Width = 110,
-                    PureBarcode = false,
-                    Margin = 2
-                },
-            };
-            return writer.Write(_Data);
-        }
+
+            var barcode = new Barcode(_Data,NetBarcode.Type.Code128,false,300,50);
+
+			//BarcodeWriterGeneric writer = new BarcodeWriterGeneric()
+			//{
+			//	Format = BarcodeFormat.CODABAR,
+			//	Options = new EncodingOptions
+			//	{
+			//		Height = 65,
+			//		Width = 110,
+			//		PureBarcode = false,
+			//		Margin = 0,
+			//		GS1Format = true
+			//	}
+			//};
+			//return writer.Write(_Data);
+			return barcode.GetImage();
+		}
 
 		private static string IntializeFile(string DepType)
 		{
@@ -156,8 +166,8 @@ namespace PrintersQrCode
                 {
                     DisableECI = true,
                     CharacterSet = "UTF-8",
-                    Width = 200,
-                    Height = 200,
+                    Width = 300,
+                    Height = 300,
                     Margin=0,
                     ErrorCorrection= ErrorCorrectionLevel.H,
                 };
@@ -203,27 +213,42 @@ namespace PrintersQrCode
                 document2.Pages.Add();
                 document2.SaveToFile($@"{pdfPath}");
             }
-           
+
+
             Spire.Pdf.PdfDocument document = new Spire.Pdf.PdfDocument($@"{pdfPath}");
             if (document.Pages.Count <= 0)
                 return false;
+           
             PdfPageBase page = document.Pages[0];
-            Spire.Pdf.Graphics.PdfTemplate template = new Spire.Pdf.Graphics.PdfTemplate(qrImage.Size);
+            var _size = _codeType == CodeType.BarCode ? new Size(250,80):new Size(100,100);
+            Spire.Pdf.Graphics.PdfTemplate template = new Spire.Pdf.Graphics.PdfTemplate(_size);
 
             PdfImage image = PdfImage.FromImage(qrImage);
             int FontSize = 11;
+            string CodeDate = $"{DateTime.Now.ToString("MM/dd/yy")} {DateTime.Now.ToShortTimeString()}";
+           var CodeStringSize =  MeasureString(_Code);
+           var CodeDateStringSize = MeasureString(CodeDate);
+
             if (_codeType == CodeType.BarCode)
             {
-                template.Graphics.DrawImage(image, 0, 0, image.Width, image.Height - 15);
-                template.Graphics.DrawString($"{DateTime.Now.ToString("MM/dd/yy")} {DateTime.Now.ToShortTimeString()}",
-                                   new Spire.Pdf.Graphics.PdfFont(PdfFontFamily.Helvetica, FontSize, PdfFontStyle.Bold),
-                                   PdfBrushes.Black, new PointF(image.Width/6, image.Height - 15));
-            }
+                template.Graphics.DrawImage(image, 0, 0, _size.Width, _size.Height-40);
+                template.Graphics.DrawString(_Code,
+                    new Spire.Pdf.Graphics.PdfFont(PdfFontFamily.Helvetica, 16, PdfFontStyle.Regular),
+                    PdfBrushes.Black,((template.Width- CodeStringSize.Width)/2)+20, 42)
+                  ;
+
+				template.Graphics.DrawString(CodeDate,
+								   new Spire.Pdf.Graphics.PdfFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold),
+								   PdfBrushes.Black, ((template.Width -CodeDateStringSize.Width)/ 2)+30, 65);
+			}
             else
             {
-                template.Graphics.DrawImage(image, 0, 0, image.Width, image.Height);         
+                template.Graphics.DrawImage(image, 0, 0, _size.Width, _size.Height);         
             }
-            RectangleF rectangle = new RectangleF(new PointF(0, 0), template.Size);
+            RectangleF rectangle;
+            if (_codeType == CodeType.Qrcode)
+            { rectangle = new RectangleF(new PointF(495,742), template.Size); }
+            else { rectangle = new RectangleF(new PointF(0,  762), template.Size); }
             PdfRubberStampAnnotation stamp = new PdfRubberStampAnnotation(rectangle);
 
             //set the appearance of the annotation  
@@ -234,55 +259,65 @@ namespace PrintersQrCode
             page.AnnotationsWidget.Add(stamp);
 
             document.SaveToFile($@"{pdfPath}", FileFormat.PDF);
-
             if (_codeType == CodeType.BarCode)
             {
                 var extention = Path.GetExtension(pdfPath);
                 var directory = Path.GetDirectoryName(pdfPath);
-                FileSystem.Rename(pdfPath, $"{directory}\\{_Code}{extention}");
+                FileSystem.Rename(pdfPath, $"{directory}\\{_UserName}#{_Code}{extention}");
             }
 
             return true;
         }
+        private static SizeF MeasureString(string _Data) {
+            Font f = new Font("Courier", 14, FontStyle.Regular);
 
-		#region Extra
-		//private static Image ResizeImage(Image imgToResize, Size size)
-		//{
-		//    //Get the image current width  
-		//    int sourceWidth = imgToResize.Width;
-		//    //Get the image current height  
-		//    int sourceHeight = imgToResize.Height;
-		//    float nPercent = 0;
-		//    float nPercentW = 0;
-		//    float nPercentH = 0;
-		//    //Calulate  width with new desired size  
-		//    nPercentW = ((float)size.Width / (float)sourceWidth);
-		//    //Calculate height with new desired size  
-		//    nPercentH = ((float)size.Height / (float)sourceHeight);
-		//    if (nPercentH < nPercentW)
-		//        nPercent = nPercentH;
-		//    else
-		//        nPercent = nPercentW;
-		//    //New Width  
-		//    int destWidth = (int)(sourceWidth * nPercent);
-		//    //New Height  
-		//    int destHeight = (int)(sourceHeight * nPercent);
-		//    Bitmap b = new Bitmap(destWidth, destHeight);
-		//    Graphics g = Graphics.FromImage((System.Drawing.Image)b);
-		//    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-		//    // Draw image with new width and height  
-		//    g.DrawImage(imgToResize, 0, 0, destWidth, destHeight);
-		//    g.Dispose();
-		//    return b;
-		//}
+            //create a bmp / graphic to use MeasureString on
+            Bitmap b = new Bitmap(300, 300);
+            Graphics g = Graphics.FromImage(b);
 
-		//private static bool GenerateJsonFile(string FilePath) 
-		//{
-		//    if (File.Exists(FilePath))
-		//        return false;
-		//    return true;
-		//} 
-		#endregion
+            //measure the string and choose a width:
+            SizeF sizeOfString = new SizeF();
+            sizeOfString = g.MeasureString(_Data, f,300);
+            return sizeOfString;
+        }
+        #region Extra
+        //private static Image ResizeImage(Image imgToResize, Size size)
+        //{
+        //    //Get the image current width  
+        //    int sourceWidth = imgToResize.Width;
+        //    //Get the image current height  
+        //    int sourceHeight = imgToResize.Height;
+        //    float nPercent = 0;
+        //    float nPercentW = 0;
+        //    float nPercentH = 0;
+        //    //Calulate  width with new desired size  
+        //    nPercentW = ((float)size.Width / (float)sourceWidth);
+        //    //Calculate height with new desired size  
+        //    nPercentH = ((float)size.Height / (float)sourceHeight);
+        //    if (nPercentH < nPercentW)
+        //        nPercent = nPercentH;
+        //    else
+        //        nPercent = nPercentW;
+        //    //New Width  
+        //    int destWidth = (int)(sourceWidth * nPercent);
+        //    //New Height  
+        //    int destHeight = (int)(sourceHeight * nPercent);
+        //    Bitmap b = new Bitmap(destWidth, destHeight);
+        //    Graphics g = Graphics.FromImage((System.Drawing.Image)b);
+        //    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        //    // Draw image with new width and height  
+        //    g.DrawImage(imgToResize, 0, 0, destWidth, destHeight);
+        //    g.Dispose();
+        //    return b;
+        //}
 
-	}
+        //private static bool GenerateJsonFile(string FilePath) 
+        //{
+        //    if (File.Exists(FilePath))
+        //        return false;
+        //    return true;
+        //} 
+        #endregion
+
+    }
 }

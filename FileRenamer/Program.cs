@@ -17,7 +17,7 @@ namespace FileRenamer
 				var List = FileName.Split(',');
 				var NewName = List?.FirstOrDefault(e => e.StartsWith("007033"));
 				FileSystem.RenameFile(args[1], $"{NewName}{Extension}");
-				File.Delete(args[0]);
+				//File.Delete(args[0]);
 
 			}
 			catch (Exception ex)
