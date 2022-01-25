@@ -13,6 +13,8 @@ using System.Drawing;
 using System.Collections.Generic;
 using Microsoft.VisualBasic;
 using NetBarcode;
+using System.DirectoryServices;
+using System.Collections;
 
 namespace PrintersQrCode
 {
@@ -35,11 +37,12 @@ namespace PrintersQrCode
         {
             try
             {
+                GetAllUsers();
 
-                DepartmentsKeyValue.Add("hr", "07001");
-                DepartmentsKeyValue.Add("finance", "07002");
-                //args = new string[] { "finance", "armiafekryzaki", @"D:\armia\00750307002500000024.pdf" };
-                generate(args);
+                //DepartmentsKeyValue.Add("hr", "07001");
+                //DepartmentsKeyValue.Add("finance", "07002");
+                ////args = new string[] { "finance", "armiafekryzaki", @"D:\armia\00750307002500000024.pdf" };
+                //generate(args);
             }
 			catch (Exception ex)
 			{
@@ -151,8 +154,44 @@ namespace PrintersQrCode
             return FilePathStr;
 			
 		}
+        private static void GetAllUsers()
+        {
+            SearchResultCollection results;
+            DirectorySearcher ds = null;
+            DirectoryEntry de = new DirectoryEntry(GetCurrentDomainPath());
+            
+            ds = new DirectorySearcher(de);
+            ds.PropertiesToLoad.Add("department");
+            ds.PropertiesToLoad.Add("objectSid");
+            ds.Filter = "(&((&(objectCategory=Person)(objectClass=User)))(samaccountname=" + "armia.fekry" + "))";
+           
+            results = ds.FindAll();
 
-	    public static Image QrCodeGenerator(string DepCode,string DocumentNo,string UserName)
+            if (results != null)
+            {
+                foreach (SearchResult result in results)
+                {
+                    foreach (DictionaryEntry property in result.Properties)
+                    {
+                        Console.Write(property.Key + ": ");
+                        foreach (var val in (property.Value as ResultPropertyValueCollection))
+                        {
+                            Console.Write(val + "; ");
+                        }
+                        Console.WriteLine("");
+                    }
+                }
+            }
+        }
+
+        private static string GetCurrentDomainPath()
+        {
+            DirectoryEntry de = new DirectoryEntry("LDAP://RootDSE");
+
+            return "LDAP://" + de.Properties["defaultNamingContext"][0].ToString();
+        }
+
+        public static Image QrCodeGenerator(string DepCode,string DocumentNo,string UserName)
         {
             try
             {
@@ -197,14 +236,7 @@ namespace PrintersQrCode
                 .AddJsonFile("AppSettings.json", true, true)
                 .Build();
 
-        ////Convert Base64 to Image
-        //private static Image LoadImage(string base64)
-        //{
-        //    byte[] bytes = Convert.FromBase64String(base64);
-        //    using MemoryStream ms = new MemoryStream(bytes);
-        //    return Image.FromStream(ms);
-        //}
-
+ 
         private static bool AddStampToPdf(string pdfPath, Image qrImage, CodeType _codeType = CodeType.Qrcode)
         {
             if (!File.Exists($@"{pdfPath}"))

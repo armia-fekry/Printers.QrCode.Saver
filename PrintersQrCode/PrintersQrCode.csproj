@@ -22,6 +22,8 @@
     <PackageReference Include="NetBarcode" Version="1.4.4" />
     <PackageReference Include="Spire.Barcode" Version="5.9.4" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
+    <PackageReference Include="System.DirectoryServices" Version="6.0.0" />
+    <PackageReference Include="System.Linq" Version="4.3.0" />
     <PackageReference Include="ZXing.Net" Version="0.16.6" />
   </ItemGroup>
 
