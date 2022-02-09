@@ -37,13 +37,13 @@ namespace PrintersQrCode
         {
             try
             {
-                GetAllUsers();
+				// GetAllUsers();
 
-                //DepartmentsKeyValue.Add("hr", "07001");
-                //DepartmentsKeyValue.Add("finance", "07002");
-                ////args = new string[] { "finance", "armiafekryzaki", @"D:\armia\00750307002500000024.pdf" };
-                //generate(args);
-            }
+				DepartmentsKeyValue.Add("hr", "07001");
+				DepartmentsKeyValue.Add("finance", "07002");
+				args = new string[] { "finance", "armiafekryzaki", @"D:\armia\00750307002500000024.pdf" };
+				generate(args);
+			}
 			catch (Exception ex)
 			{
                 Console.WriteLine(ex.Message);
@@ -252,7 +252,7 @@ namespace PrintersQrCode
                 return false;
            
             PdfPageBase page = document.Pages[0];
-            var _size = _codeType == CodeType.BarCode ? new Size(250,80):new Size(100,100);
+            var _size = _codeType == CodeType.BarCode ? new Size(230,80):new Size(100,100);
             Spire.Pdf.Graphics.PdfTemplate template = new Spire.Pdf.Graphics.PdfTemplate(_size);
 
             PdfImage image = PdfImage.FromImage(qrImage);
@@ -263,15 +263,15 @@ namespace PrintersQrCode
 
             if (_codeType == CodeType.BarCode)
             {
-                template.Graphics.DrawImage(image, 0, 0, _size.Width, _size.Height-40);
+                template.Graphics.DrawImage(image,0, 0, _size.Width, _size.Height-40);
                 template.Graphics.DrawString(_Code,
-                    new Spire.Pdf.Graphics.PdfFont(PdfFontFamily.Helvetica, 16, PdfFontStyle.Regular),
+                    new Spire.Pdf.Graphics.PdfFont(PdfFontFamily.Helvetica, 12, PdfFontStyle.Regular),
                     PdfBrushes.Black,((template.Width- CodeStringSize.Width)/2)+20, 42)
                   ;
 
 				template.Graphics.DrawString(CodeDate,
-								   new Spire.Pdf.Graphics.PdfFont(PdfFontFamily.Helvetica, 14, PdfFontStyle.Bold),
-								   PdfBrushes.Black, ((template.Width -CodeDateStringSize.Width)/ 2)+30, 65);
+								   new Spire.Pdf.Graphics.PdfFont(PdfFontFamily.Helvetica, 12, PdfFontStyle.Bold),
+								   PdfBrushes.Black, ((template.Width -CodeDateStringSize.Width)/ 2)+20, 65);
 			}
             else
             {
@@ -279,8 +279,8 @@ namespace PrintersQrCode
             }
             RectangleF rectangle;
             if (_codeType == CodeType.Qrcode)
-            { rectangle = new RectangleF(new PointF(495,742), template.Size); }
-            else { rectangle = new RectangleF(new PointF(0,  762), template.Size); }
+            { rectangle = new RectangleF(new PointF(495,700), template.Size); }
+            else { rectangle = new RectangleF(new PointF(0, 720), template.Size); }
             PdfRubberStampAnnotation stamp = new PdfRubberStampAnnotation(rectangle);
 
             //set the appearance of the annotation  
@@ -301,7 +301,7 @@ namespace PrintersQrCode
             return true;
         }
         private static SizeF MeasureString(string _Data) {
-            Font f = new Font("Courier", 14, FontStyle.Regular);
+            Font f = new Font("Courier", 12, FontStyle.Regular);
 
             //create a bmp / graphic to use MeasureString on
             Bitmap b = new Bitmap(300, 300);
@@ -309,7 +309,7 @@ namespace PrintersQrCode
 
             //measure the string and choose a width:
             SizeF sizeOfString = new SizeF();
-            sizeOfString = g.MeasureString(_Data, f,300);
+            sizeOfString = g.MeasureString(_Data, f,250);
             return sizeOfString;
         }
         #region Extra
