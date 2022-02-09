@@ -41,7 +41,7 @@ namespace PrintersQrCode
 
 				DepartmentsKeyValue.Add("hr", "07001");
 				DepartmentsKeyValue.Add("finance", "07002");
-				args = new string[] { "finance", "armiafekryzaki", @"D:\armia\00750307002500000024.pdf" };
+				//args = new string[] { "finance", "armiafekryzaki", @"D:\armia\00750307002500000024.pdf" };
 				generate(args);
 			}
 			catch (Exception ex)
